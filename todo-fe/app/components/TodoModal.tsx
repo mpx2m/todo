@@ -44,6 +44,14 @@ export function TodoModal({
 }: TodoModalProps) {
   const [messageApi, contextHolder] = message.useMessage()
   const [todoForm] = Form.useForm<CreateFormValue>()
+  const isBlockedTodo = editingTodo?.dependencyStatus === "BLOCKED"
+  const isCurrentlyInProgress = editingTodo?.status === "IN_PROGRESS"
+  const shouldDisableInProgress =
+    Boolean(editingTodo) && isBlockedTodo && !isCurrentlyInProgress
+  const statusSelectOptions = statusOptions.map(option => ({
+    ...option,
+    disabled: shouldDisableInProgress && option.value === "IN_PROGRESS",
+  }))
 
   useEffect(() => {
     if (!open) {
@@ -176,7 +184,7 @@ export function TodoModal({
             />
           </Form.Item>
           <Form.Item label="Status" name="status">
-            <Select placeholder="Status" options={statusOptions} />
+            <Select placeholder="Status" options={statusSelectOptions} />
           </Form.Item>
           <Form.Item label="Priority" name="priority">
             <Radio.Group optionType="button" options={priorityOptions} />
