@@ -9,7 +9,7 @@ import {
   TodoSubgraph,
 } from "./data/types"
 
-const TODO_API = "http://localhost:3000"
+const TODO_API = "/api"
 
 export interface ApiResponse<T> {
   success: boolean
@@ -38,10 +38,9 @@ export const todoApi = {
       .then(res => res.data),
   addDependencies: (id: string, data: AddDependenciesPayload) =>
     axios
-      .post<ApiResponse<{ dependentId: string; created: number }>>(
-        `${TODO_API}/todo/${id}/dependencies`,
-        data,
-      )
+      .post<
+        ApiResponse<{ dependentId: string; created: number }>
+      >(`${TODO_API}/todo/${id}/dependencies`, data)
       .then(res => res.data),
   listDependencies: (id: string) =>
     axios
@@ -53,9 +52,8 @@ export const todoApi = {
       .then(res => res.data),
   removeDependencies: (id: string, data: AddDependenciesPayload) =>
     axios
-      .delete<ApiResponse<{ dependentId: string; removed: number }>>(
-        `${TODO_API}/todo/${id}/dependencies`,
-        { data },
-      )
+      .delete<
+        ApiResponse<{ dependentId: string; removed: number }>
+      >(`${TODO_API}/todo/${id}/dependencies`, { data })
       .then(res => res.data),
 }

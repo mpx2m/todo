@@ -61,12 +61,13 @@ export const columns = ({
               <div>
                 Created At: {new Date(record.createdAt).toLocaleString()}
               </div>
+              <div>
+                UpdatedAt At: {new Date(record.createdAt).toLocaleString()}
+              </div>
             </>
           }
         >
-          <Button size="small" color="default" variant="text">
-            {name}
-          </Button>
+          {name}
         </Tooltip>
       )
     },
