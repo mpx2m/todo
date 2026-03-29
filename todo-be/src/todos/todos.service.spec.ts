@@ -27,6 +27,16 @@ const createExecChain = <T>(result: T) => {
   return chain;
 };
 
+const createHistoryChain = (result: any) => {
+  const chain = {
+    sort: jest.fn().mockReturnThis(),
+    lean: jest.fn().mockReturnThis(),
+    exec: jest.fn().mockResolvedValue(result),
+  };
+
+  return chain;
+};
+
 const createSession = () => ({
   startTransaction: jest.fn(),
   abortTransaction: jest.fn().mockResolvedValue(undefined),
@@ -54,6 +64,7 @@ describe('TodosService', () => {
   };
   let todoHistoryModel: {
     create: jest.Mock;
+    find: jest.Mock;
   };
 
   beforeEach(() => {
@@ -77,6 +88,7 @@ describe('TodosService', () => {
 
     todoHistoryModel = {
       create: jest.fn(),
+      find: jest.fn(),
     };
 
     service = new TodosService(
@@ -428,6 +440,24 @@ describe('TodosService', () => {
           dependentId: String(dependentId),
         },
       ],
+    });
+  });
+
+  it('returns history for a todo', async () => {
+    const id = new Types.ObjectId().toString();
+    const history = [
+      {
+        _id: 'history1',
+        todoId: new Types.ObjectId(id),
+        changedAt: new Date(),
+        changes: { status: { from: 'NOT_STARTED', to: 'IN_PROGRESS' } },
+      },
+    ];
+    todoHistoryModel.find.mockReturnValue(createHistoryChain(history));
+
+    await expect(service.getHistory(id)).resolves.toEqual(history);
+    expect(todoHistoryModel.find).toHaveBeenCalledWith({
+      todoId: new Types.ObjectId(id),
     });
   });
 });

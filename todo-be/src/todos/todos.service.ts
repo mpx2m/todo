@@ -910,4 +910,13 @@ export class TodosService {
       `Todo cannot move to IN_PROGRESS until dependencies are COMPLETED or ARCHIVED: ${messages.join(', ')}`,
     );
   }
+
+  async getHistory(id: string) {
+    const todoObjectId = new Types.ObjectId(id);
+    return this.todoHistoryModel
+      .find({ todoId: todoObjectId })
+      .sort({ changedAt: -1 })
+      .lean()
+      .exec();
+  }
 }

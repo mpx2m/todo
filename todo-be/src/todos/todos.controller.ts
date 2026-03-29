@@ -24,6 +24,7 @@ import {
   TodoSearchResponseDto,
 } from './dto/todo-response.dto';
 import { TodoSubgraphDto } from './dto/todo-subgraph.dto';
+import { TodoHistoryDto } from './dto/todo-history.dto';
 import { UpdateTodoDto } from './dto/update-todo.dto';
 import { MongoIdPipe } from './mongo-id.pipe';
 import { TodosService } from './todos.service';
@@ -115,6 +116,13 @@ export class TodosController {
       throw new NotFoundException(`Todo with id ${id} not found`);
     }
     return todo;
+  }
+
+  @Get(':id/history')
+  @ApiOperation({ summary: 'Get status change history for a todo' })
+  @ApiOkResponse({ type: [TodoHistoryDto] })
+  async getHistory(@Param('id', MongoIdPipe) id: string) {
+    return this.todoService.getHistory(id);
   }
 
   @Delete(':id')

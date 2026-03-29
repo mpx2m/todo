@@ -40,6 +40,7 @@ describe('TodosController', () => {
     findOne: jest.fn(),
     update: jest.fn(),
     remove: jest.fn(),
+    getHistory: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -242,5 +243,20 @@ describe('TodosController', () => {
     await expect(controller.remove(mockTodo._id)).rejects.toThrow(
       new NotFoundException(`Todo with id ${mockTodo._id} not found`),
     );
+  });
+
+  it('returns history for a todo', async () => {
+    const history = [
+      {
+        _id: 'history1',
+        todoId: mockTodo._id,
+        changedAt: new Date(),
+        changes: { status: { from: 'NOT_STARTED', to: 'IN_PROGRESS' } },
+      },
+    ];
+    todoService.getHistory.mockResolvedValue(history);
+
+    await expect(controller.getHistory(mockTodo._id)).resolves.toEqual(history);
+    expect(todoService.getHistory).toHaveBeenCalledWith(mockTodo._id);
   });
 });
