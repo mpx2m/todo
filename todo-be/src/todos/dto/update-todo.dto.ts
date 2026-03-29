@@ -7,8 +7,8 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { RecurrenceDto } from './todo.dto';
 import { TodoPriority, TodoStatus } from '../types';
+import { RecurrenceDto } from './recurrence.dto';
 
 export class UpdateTodoDto {
   @IsOptional()
