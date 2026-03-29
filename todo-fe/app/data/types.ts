@@ -31,6 +31,11 @@ export enum DependencyStatus {
   BLOCKED = "BLOCKED",
 }
 
+export enum TodoHistoryChangeBy {
+  MANUAL = "MANUAL",
+  RECURRENCE = "RECURRENCE",
+}
+
 export interface CreateFormValue {
   name: string
   description?: string
@@ -103,13 +108,11 @@ export interface TodoSearchResponse {
 export interface TodoHistory {
   _id: string
   todoId: string
-  changedAt: string
-  changes: {
-    status: {
-      from: Status
-      to: Status
-    }
-  }
+  from: Status
+  to: Status
+  by: TodoHistoryChangeBy
+  createdAt: string
+  updatedAt: string
 }
 
 export interface AddDependenciesPayload {

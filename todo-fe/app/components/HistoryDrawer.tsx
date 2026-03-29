@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query"
 import { Drawer, Empty, Skeleton, Timeline, Typography, Tag } from "antd"
 import { todoApi } from "../apis"
-import { TodoItem, TodoHistory } from "../data/types"
+import { TodoItem, TodoHistory, TodoHistoryChangeBy } from "../data/types"
 import { mapStatus } from "../data/columns"
 
 interface HistoryDrawerProps {
@@ -39,27 +39,30 @@ export function HistoryDrawer({ open, onClose, todo }: HistoryDrawerProps) {
         <Timeline
           items={history.map((item: TodoHistory) => ({
             key: item._id,
-            children: (
+            content: (
               <div>
-                <Typography.Text strong>
-                  {new Date(item.changedAt).toLocaleString()}
+                <Typography.Text>
+                  {new Date(item.createdAt).toLocaleString()}
                 </Typography.Text>
                 <br />
+                {item.by === TodoHistoryChangeBy.RECURRENCE && (
+                  <Typography.Text strong>{`by Recurrence`}</Typography.Text>
+                )}
                 <div className="mt-2 flex gap-2 items-center">
                   <Tag
                     variant={"outlined"}
-                    color={mapStatus[item.changes.status?.from]?.color}
-                    icon={mapStatus[item.changes.status?.from]?.icon}
+                    color={mapStatus[item.from]?.color}
+                    icon={mapStatus[item.from]?.icon}
                   >
-                    {mapStatus[item.changes.status?.from]?.label}
+                    {mapStatus[item.from]?.label}
                   </Tag>
                   <span>→</span>
                   <Tag
                     variant={"outlined"}
-                    color={mapStatus[item.changes.status?.to]?.color}
-                    icon={mapStatus[item.changes.status?.to]?.icon}
+                    color={mapStatus[item.to]?.color}
+                    icon={mapStatus[item.to]?.icon}
                   >
-                    {mapStatus[item.changes.status?.to]?.label}
+                    {mapStatus[item.to]?.label}
                   </Tag>
                 </div>
               </div>
