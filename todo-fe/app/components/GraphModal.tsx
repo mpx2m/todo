@@ -159,7 +159,6 @@ export const GraphModal = ({ open, todo, onCancel }: GraphModalProps) => {
   return (
     <Modal
       centered
-      mask={{ closable: false }}
       closable
       width={960}
       destroyOnHidden
