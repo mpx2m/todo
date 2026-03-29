@@ -7,12 +7,14 @@ import {
   TodoDependency,
   TodoDependencySchema,
 } from './schemas/todo-dependency.schema';
+import { TodoHistory, TodoHistorySchema } from './schemas/todo-history.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Todo.name, schema: TodoSchema },
       { name: TodoDependency.name, schema: TodoDependencySchema },
+      { name: TodoHistory.name, schema: TodoHistorySchema },
     ]),
   ],
   controllers: [TodosController],

@@ -10,6 +10,7 @@ import { SearchTodoDto, SortOrder } from './dto/search-todo.dto';
 import { UpdateTodoDto } from './dto/update-todo.dto';
 import { Todo } from './schemas/todo.schema';
 import { TodoDependency } from './schemas/todo-dependency.schema';
+import { TodoHistory } from './schemas/todo-history.schema';
 import {
   DependencyStatus,
   Recurrence,
@@ -24,6 +25,7 @@ export class TodosService {
     @InjectModel(Todo.name) private todoModel: Model<Todo>,
     @InjectModel(TodoDependency.name)
     private todoDependencyModel: Model<TodoDependency>,
+    @InjectModel(TodoHistory.name) private todoHistoryModel: Model<TodoHistory>,
   ) {}
 
   async create(createTodoDto: CreateTodoDto): Promise<Todo> {
@@ -226,12 +228,22 @@ export class TodosService {
         return null;
       }
 
-      await this.createNextRecurringTodoIfNeeded(
-        id,
-        existing,
-        updated,
-        session,
-      );
+      await this.handleRecurringTodo(id, existing, updated, session);
+
+      if (existing.status !== updated.status) {
+        await this.todoHistoryModel.create(
+          [
+            {
+              todoId: new Types.ObjectId(id),
+              changedAt: new Date(),
+              changes: {
+                status: { from: existing.status, to: updated.status },
+              },
+            },
+          ],
+          { session },
+        );
+      }
 
       await session.commitTransaction();
       return updated;
@@ -821,7 +833,7 @@ export class TodosService {
     );
   }
 
-  private async createNextRecurringTodoIfNeeded(
+  private async handleRecurringTodo(
     todoId: string,
     existing: Todo,
     updated: Todo,
@@ -835,41 +847,17 @@ export class TodosService {
       return;
     }
 
-    const baseDueDate = updated.dueDate
-      ? new Date(updated.dueDate)
-      : new Date();
-    const nextDueDate = this.getNextDueDate(baseDueDate, updated.recurrence);
-
-    const [nextTodo] = await this.todoModel.create(
-      [
-        this.buildTodoPayload({
-          name: updated.name,
-          description: updated.description,
-          dueDate: nextDueDate,
-          priority: updated.priority,
-          recurrence: updated.recurrence,
-          status: TodoStatus.NOT_STARTED,
-        }),
-      ],
-      { session },
-    );
-
-    const todoObjectId = new Types.ObjectId(todoId);
-    const activePrerequisiteEdges = await this.todoDependencyModel
-      .find({ dependentId: todoObjectId, deletedAt: null })
-      .session(session)
-      .lean()
-      .exec();
-
-    if (activePrerequisiteEdges.length === 0) {
-      return;
+    if (updated.recurrence && updated.dueDate) {
+      const nextDueDate = this.getNextDueDate(
+        new Date(updated.dueDate),
+        updated.recurrence,
+      );
+      await this.todoModel.updateOne(
+        { _id: todoId },
+        { $set: { status: TodoStatus.NOT_STARTED, dueDate: nextDueDate } },
+        { session },
+      );
     }
-
-    const copyEdges = activePrerequisiteEdges.map((edge) => ({
-      prerequisiteId: edge.prerequisiteId,
-      dependentId: nextTodo._id,
-    }));
-    await this.todoDependencyModel.insertMany(copyEdges, { session });
   }
 
   private async ensureDependenciesReadyForInProgress(
