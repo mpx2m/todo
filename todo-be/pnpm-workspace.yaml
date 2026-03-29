@@ -1,2 +1,5 @@
 allowBuilds:
-  '@nestjs/core': false
+  "@nestjs/core": false
+
+packages:
+  - .
