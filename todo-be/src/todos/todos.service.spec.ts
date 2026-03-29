@@ -2,7 +2,13 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { SortBy, SortOrder } from './dto/search-todo.dto';
 import { TodosService } from './todos.service';
-import { Recurrence, RecurrenceUnit, TodoPriority, TodoStatus } from './types';
+import {
+  Recurrence,
+  RecurrenceUnit,
+  TodoHistoryChangeBy,
+  TodoPriority,
+  TodoStatus,
+} from './types';
 
 jest.mock('./schemas/todo.schema', () => ({
   Todo: class Todo {},
@@ -379,17 +385,32 @@ describe('TodosService', () => {
       { $set: { status: TodoStatus.NOT_STARTED, dueDate: nextDueDate } },
       { session },
     );
-    expect(todoHistoryModel.create).toHaveBeenCalledWith(
+    expect(todoHistoryModel.create).toHaveBeenNthCalledWith(
+      1,
       [
         expect.objectContaining({
           todoId: new Types.ObjectId(id),
-          changes: {
-            status: { from: TodoStatus.IN_PROGRESS, to: TodoStatus.COMPLETED },
-          },
+          from: TodoStatus.IN_PROGRESS,
+          to: TodoStatus.COMPLETED,
+          by: TodoHistoryChangeBy.MANUAL,
         }),
       ],
       { session },
     );
+
+    expect(todoHistoryModel.create).toHaveBeenNthCalledWith(
+      2,
+      [
+        expect.objectContaining({
+          todoId: new Types.ObjectId(id),
+          from: TodoStatus.COMPLETED,
+          to: TodoStatus.NOT_STARTED,
+          by: TodoHistoryChangeBy.RECURRENCE,
+        }),
+      ],
+      { session },
+    );
+
     expect(session.commitTransaction).toHaveBeenCalled();
   });
 
@@ -449,15 +470,20 @@ describe('TodosService', () => {
       {
         _id: 'history1',
         todoId: new Types.ObjectId(id),
-        changedAt: new Date(),
-        changes: { status: { from: 'NOT_STARTED', to: 'IN_PROGRESS' } },
+        from: 'NOT_STARTED',
+        to: 'IN_PROGRESS',
+        by: TodoHistoryChangeBy.MANUAL,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
     ];
-    todoHistoryModel.find.mockReturnValue(createHistoryChain(history));
+    const chain = createHistoryChain(history);
+    todoHistoryModel.find.mockReturnValue(chain);
 
     await expect(service.getHistory(id)).resolves.toEqual(history);
     expect(todoHistoryModel.find).toHaveBeenCalledWith({
       todoId: new Types.ObjectId(id),
     });
+    expect(chain.sort).toHaveBeenCalledWith({ createdAt: -1 });
   });
 });

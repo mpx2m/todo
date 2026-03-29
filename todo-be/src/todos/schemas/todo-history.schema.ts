@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
+import { TodoHistoryChangeBy, TodoStatus } from '../types';
 
 export type TodoHistoryDocument = HydratedDocument<TodoHistory>;
 
@@ -8,14 +9,28 @@ export class TodoHistory {
   @Prop({ type: Types.ObjectId, ref: 'Todo', required: true })
   todoId: Types.ObjectId;
 
-  @Prop({ required: true })
-  changedAt: Date;
+  @Prop({
+    type: String,
+    enum: Object.values(TodoStatus),
+    required: true,
+  })
+  from: TodoStatus;
 
-  @Prop({ type: Object, required: true })
-  changes: Record<string, any>;
+  @Prop({
+    type: String,
+    enum: Object.values(TodoStatus),
+    required: true,
+  })
+  to: TodoStatus;
+
+  @Prop({
+    type: String,
+    enum: Object.values(TodoHistoryChangeBy),
+    required: true,
+  })
+  by: TodoHistoryChangeBy;
 }
 
 export const TodoHistorySchema = SchemaFactory.createForClass(TodoHistory);
 
-// index for quick lookup by todo and recent changes first
-TodoHistorySchema.index({ todoId: 1, changedAt: -1 });
+TodoHistorySchema.index({ todoId: 1, createdAt: -1 });

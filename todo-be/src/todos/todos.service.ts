@@ -16,6 +16,7 @@ import {
   Recurrence,
   RecurrenceConfig,
   RecurrenceUnit,
+  TodoHistoryChangeBy,
   TodoStatus,
 } from './types';
 
@@ -228,22 +229,21 @@ export class TodosService {
         return null;
       }
 
-      await this.handleRecurringTodo(id, existing, updated, session);
-
       if (existing.status !== updated.status) {
         await this.todoHistoryModel.create(
           [
             {
               todoId: new Types.ObjectId(id),
-              changedAt: new Date(),
-              changes: {
-                status: { from: existing.status, to: updated.status },
-              },
+              from: existing.status,
+              to: updated.status,
+              by: TodoHistoryChangeBy.MANUAL,
             },
           ],
           { session },
         );
       }
+
+      await this.handleRecurringTodo(id, existing, updated, session);
 
       await session.commitTransaction();
       return updated;
@@ -852,9 +852,22 @@ export class TodosService {
         new Date(updated.dueDate),
         updated.recurrence,
       );
+
       await this.todoModel.updateOne(
         { _id: todoId },
         { $set: { status: TodoStatus.NOT_STARTED, dueDate: nextDueDate } },
+        { session },
+      );
+
+      await this.todoHistoryModel.create(
+        [
+          {
+            todoId: new Types.ObjectId(todoId),
+            from: TodoStatus.COMPLETED,
+            to: TodoStatus.NOT_STARTED,
+            by: TodoHistoryChangeBy.RECURRENCE,
+          },
+        ],
         { session },
       );
     }
@@ -915,7 +928,7 @@ export class TodosService {
     const todoObjectId = new Types.ObjectId(id);
     return this.todoHistoryModel
       .find({ todoId: todoObjectId })
-      .sort({ changedAt: -1 })
+      .sort({ createdAt: -1 })
       .lean()
       .exec();
   }

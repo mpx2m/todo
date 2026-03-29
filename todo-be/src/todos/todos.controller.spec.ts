@@ -250,8 +250,11 @@ describe('TodosController', () => {
       {
         _id: 'history1',
         todoId: mockTodo._id,
-        changedAt: new Date(),
-        changes: { status: { from: 'NOT_STARTED', to: 'IN_PROGRESS' } },
+        from: 'NOT_STARTED',
+        to: 'IN_PROGRESS',
+        by: 'MANUAL',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
     ];
     todoService.getHistory.mockResolvedValue(history);

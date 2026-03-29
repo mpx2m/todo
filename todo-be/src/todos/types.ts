@@ -34,3 +34,8 @@ export interface RecurrenceConfig {
   interval?: number;
   unit?: RecurrenceUnit;
 }
+
+export enum TodoHistoryChangeBy {
+  MANUAL = 'MANUAL',
+  RECURRENCE = 'RECURRENCE',
+}

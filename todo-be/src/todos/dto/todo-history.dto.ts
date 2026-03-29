@@ -1,20 +1,28 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose } from 'class-transformer';
+import { TodoHistoryChangeBy, TodoStatus } from '../types';
 
 export class TodoHistoryDto {
   @ApiProperty()
-  @Expose()
   _id: string;
 
   @ApiProperty()
-  @Expose()
   todoId: string;
 
-  @ApiProperty()
-  @Expose()
-  changedAt: Date;
+  @ApiProperty({ enum: TodoStatus, example: TodoStatus.IN_PROGRESS })
+  from: TodoStatus;
+
+  @ApiProperty({ enum: TodoStatus, example: TodoStatus.COMPLETED })
+  to: TodoStatus;
+
+  @ApiProperty({
+    enum: TodoHistoryChangeBy,
+    example: TodoHistoryChangeBy.MANUAL,
+  })
+  by: TodoHistoryChangeBy;
 
   @ApiProperty()
-  @Expose()
-  changes: Record<string, any>;
+  createdAt: Date;
+
+  @ApiProperty()
+  updatedAt: Date;
 }
