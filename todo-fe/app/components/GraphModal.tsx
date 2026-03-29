@@ -28,6 +28,9 @@ const ensureMermaidInitialized = () => {
     startOnLoad: false,
     theme: "default",
     securityLevel: "loose",
+    themeVariables: {
+      fontSize: "12px",
+    },
     flowchart: {
       useMaxWidth: false,
       htmlLabels: true,
@@ -67,7 +70,12 @@ const buildMermaidGraph = (data: TodoSubgraph) => {
   const nodeLines = data.nodes.map(node => {
     const mermaidNodeId = toMermaidNodeId(node._id)
     const statusLabel = statusLabelMap.get(node.status) ?? node.status
-    const label = `${escapeMermaidLabel(node.name)}<br/><span style='font-size:12px; opacity:0.78;'>${escapeMermaidLabel(statusLabel)}</span>`
+    const label = [
+      "<div style='padding:2px 4px; line-height:1.2;'>",
+      `<div style='font-size:14px; font-weight:600;'>${escapeMermaidLabel(node.name)}</div>`,
+      `<div style='font-size:12px; opacity:0.72;'>${escapeMermaidLabel(statusLabel)}</div>`,
+      "</div>",
+    ].join("")
     const shape = node._id === data.rootId ? `(["${label}"])` : `["${label}"]`
     return `  ${mermaidNodeId}${shape}`
   })
@@ -82,11 +90,11 @@ const buildMermaidGraph = (data: TodoSubgraph) => {
       node =>
         `  class ${toMermaidNodeId(node._id)} ${getMermaidNodeClass(node, data.rootId)}`,
     ),
-    "  classDef root fill:#102a43,stroke:#102a43,color:#f0f4f8,stroke-width:2px",
-    "  classDef pending fill:#fef3c7,stroke:#d97706,color:#7c2d12",
-    "  classDef progress fill:#dbeafe,stroke:#2563eb,color:#1e3a8a",
-    "  classDef completed fill:#dcfce7,stroke:#16a34a,color:#14532d",
-    "  classDef archived fill:#e5e7eb,stroke:#6b7280,color:#374151",
+    "  classDef root fill:#102a43,stroke:#102a43,color:#f0f4f8,stroke-width:2px,font-size:12px",
+    "  classDef pending fill:#fef3c7,stroke:#d97706,color:#7c2d12,font-size:12px",
+    "  classDef progress fill:#dbeafe,stroke:#2563eb,color:#1e3a8a,font-size:12px",
+    "  classDef completed fill:#dcfce7,stroke:#16a34a,color:#14532d,font-size:12px",
+    "  classDef archived fill:#e5e7eb,stroke:#6b7280,color:#374151,font-size:12px",
   ]
 
   return ["flowchart LR", ...nodeLines, ...edgeLines, ...classLines].join("\n")
