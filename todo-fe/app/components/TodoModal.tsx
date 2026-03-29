@@ -61,6 +61,7 @@ export function TodoModal({
     if (editingTodo) {
       todoForm.setFieldsValue({
         ...editingTodo,
+        description: editingTodo.description ?? undefined,
         dueDate: editingTodo.dueDate ? dayjs(editingTodo.dueDate) : undefined,
         recurrence: editingTodo.recurrence?.type,
         customInterval: editingTodo.recurrence?.interval,
