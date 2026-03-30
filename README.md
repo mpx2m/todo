@@ -8,7 +8,7 @@
 ![Backend](https://img.shields.io/badge/backend-v0.0.9-green.svg)
 ![Frontend](https://img.shields.io/badge/frontend-v0.1.7-green.svg)
 
-[Features](#features) • [Quick Start](#quick-start) • [Development](#run-development) • [Testing](#testing--quality) • [Contributing](#contributing)
+[Features](#features) • [Quick Start](#quick-start) • [Development](#run-development) • [Testing](#testing--quality) • [CI/CD Pipeline](#cicd-pipeline)
 
 </div>
 
@@ -135,7 +135,6 @@ pnpm start
 
 The production frontend runs on **http://localhost:3002**. Ensure the backend is running on **http://localhost:3000** and connected to MongoDB.
 
-
 ## Testing & quality
 
 ### Backend tests (Jest)
@@ -168,6 +167,124 @@ pnpm format            # Prettier
 cd todo-fe
 pnpm lint              # ESLint
 ```
+
+
+## CI/CD Pipeline
+
+The project uses **GitHub Actions** for automated continuous integration and deployment.
+
+### Backend CI/CD ([`.github/workflows/backend.yml`](.github/workflows/backend.yml))
+
+**Trigger Conditions:**
+- Push to `main` or `master` branch with changes in `todo-be/**`
+- Pull requests affecting `todo-be/**`
+- Manual trigger via `workflow_dispatch`
+
+**Pipeline Steps:**
+1. **Setup Environment** - Node.js 24, pnpm 9, checkout code
+2. **Install Dependencies** - `pnpm install --frozen-lockfile`
+3. **Lint** - ESLint validation for code quality
+4. **Type Check** - TypeScript compilation check
+5. **Unit Tests** - Jest unit tests
+6. **E2E Tests** - Jest e2e tests with supertest
+7. **Build** - Production build
+8. **Version Bump** - Auto-increment patch version on main branch
+9. **Deploy to VPS** - Deploy via SSH using PM2 process manager
+
+**Deployment Details:**
+- Uses `appleboy/ssh-action` to connect to VPS
+- Pulls latest code and rebuilds on server
+- Manages NestJS process with PM2 (auto-restart on failure)
+- Zero-downtime deployment with `pm2 restart`
+
+**Required Secrets:**
+```
+VPS_HOST         - Your VPS hostname/IP
+VPS_USER         - SSH username
+VPS_PRIVATE_KEY  - SSH private key for authentication
+VPS_PORT         - SSH port (usually 22)
+```
+
+### Frontend CI/CD ([`.github/workflows/frontend.yml`](.github/workflows/frontend.yml))
+
+**Trigger Conditions:**
+- Push to `main` or `master` branch with changes in `todo-fe/**`
+- Pull requests affecting `todo-fe/**`
+- Manual trigger via `workflow_dispatch`
+
+**Pipeline Steps:**
+1. **Setup Environment** - Node.js 24, pnpm 9, checkout code
+2. **Install Dependencies** - `pnpm install --frozen-lockfile`
+3. **Lint** - ESLint validation
+4. **Type Check** - TypeScript compilation check
+5. **Test** - Vitest unit/integration tests
+6. **Build** - Next.js production build
+7. **Version Bump** - Auto-increment patch version on main branch
+8. **Deploy to Vercel** - Automatic production deployment
+
+**Deployment Details:**
+- Uses `amondnet/vercel-action` for seamless Vercel deployment
+- Only deploys on successful build and tests
+- Deploys to production on main branch pushes
+- Preview deployments on pull requests (handled by Vercel)
+
+**Required Secrets:**
+```
+VERCEL_TOKEN          - Vercel authentication token
+VERCEL_ORG_ID         - Your Vercel organization/team ID
+VERCEL_PROJECT_ID     - Your Vercel project ID
+```
+
+### CI/CD Features
+
+- ✅ **Path-based triggers** - Only runs when relevant files change
+- ✅ **Concurrency control** - Cancels outdated runs to save resources
+- ✅ **Automated testing** - Every push/PR is validated
+- ✅ **Type safety** - TypeScript validation in CI
+- ✅ **Automatic versioning** - Patch version bump on main branch
+- ✅ **Parallel execution** - Frontend and backend workflows run independently
+- ✅ **Manual triggers** - Can be run manually via GitHub Actions UI
+
+### Setting Up CI/CD
+
+#### Backend Setup (VPS Deployment)
+
+1. **Fork/clone** the repository to your GitHub account
+2. **Add VPS secrets** to GitHub Settings → Secrets and variables → Actions:
+   - `VPS_HOST` - Your VPS hostname or IP address
+   - `VPS_USER` - SSH username for VPS access
+   - `VPS_PRIVATE_KEY` - SSH private key for authentication
+   - `VPS_PORT` - SSH port (usually 22)
+3. **Ensure PM2 is installed** on your VPS: `npm install -g pm2`
+4. **Clone the repository** on your VPS in `~/todo`
+5. **Push to main** to trigger the deployment
+
+#### Frontend Setup (Vercel Deployment)
+
+1. **Create a Vercel account** at https://vercel.com
+2. **Import your project** to Vercel:
+   - Go to Vercel Dashboard → Add New Project
+   - Import your GitHub repository
+   - Set root directory to `todo-fe`
+   - Configure build settings (auto-detected for Next.js)
+3. **Get Vercel credentials**:
+   - **Token**: Account Settings → Tokens → Create Token
+   - **Org ID**: Project Settings → General → copy from "Project ID" section
+   - **Project ID**: Project Settings → General → copy "Project ID"
+4. **Add Vercel secrets** to GitHub Settings → Secrets and variables → Actions:
+   - `VERCEL_TOKEN` - Your Vercel authentication token
+   - `VERCEL_ORG_ID` - Your Vercel organization/team ID
+   - `VERCEL_PROJECT_ID` - Your Vercel project ID
+5. **Configure environment variables** in Vercel Dashboard:
+   - `NEXT_PUBLIC_API_URL` - Your backend API URL (e.g., https://api.yourdomain.com)
+6. **Push to main** to trigger automatic deployment
+
+#### Testing the Workflows
+
+- **Pull requests** will run tests and checks without deploying
+- **Push to main** will run full pipeline including deployment
+- **Manual trigger** via GitHub Actions tab for on-demand deployments
+
 
 
 ## Project structure (high-level)
