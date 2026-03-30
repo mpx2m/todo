@@ -3,6 +3,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { TransformInterceptor } from './transform.interceptor';
+import pkg from '../package.json';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -11,7 +12,7 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('Todos example')
     .setDescription('The todos API description')
-    .setVersion('1.0')
+    .setVersion(pkg.version)
     .addTag('todos')
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
