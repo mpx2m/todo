@@ -76,6 +76,54 @@ This project implements a full-stack TODO list application with **NestJS** backe
 
 **Edge case handling**: The system throws a `BadRequestException` with a clear error message listing which dependencies are blocking progress, improving UX.
 
+**Dependency Scope - Direct vs. Transitive**:
+
+The `dependencyStatus` (BLOCKED/UNBLOCKED) calculation **only considers direct dependencies**, not transitive dependencies.
+
+**Example**:
+```
+A → B → C
+```
+- Task C depends on B (direct dependency)
+- Task B depends on A (direct dependency)
+- Task C does NOT directly check A's status (transitive dependency)
+
+**Implementation**:
+- **Filtering by dependency status**: When user filters by "blocked" or "unblocked", the query checks only the immediate prerequisites of each TODO
+- **Moving to IN_PROGRESS**: The validation checks only direct dependencies, not the entire dependency chain
+
+**Rationale**:
+1. **Simplicity**: Checking transitive dependencies would require recursive graph traversal for every query
+2. **Performance**: Direct dependency checks use a single `$lookup` operation vs. expensive `$graphLookup` for transitive closure
+3. **User control**: Users manage their immediate blockers; if B is ready, C shouldn't be blocked by A's status
+4. **Responsibility separation**: Each task owner is responsible for their direct dependencies; B's owner ensures A is done before marking B as ready
+
+**Concrete Scenario**:
+```typescript
+// Given: A (NOT_STARTED) → B (COMPLETED) → C (NOT_STARTED)
+
+// Query C's dependency status
+GET /todo/search?id=C
+// Returns: dependencyStatus: "UNBLOCKED"
+// Because B (C's direct dependency) is COMPLETED
+
+// Try to move C to IN_PROGRESS
+PATCH /todo/C { status: "IN_PROGRESS" }
+// ✅ Succeeds - B is COMPLETED, A's status is irrelevant to C
+
+// Try to move B back to IN_PROGRESS
+PATCH /todo/B { status: "IN_PROGRESS" }
+// ❌ Fails - A (B's direct dependency) is NOT_STARTED
+```
+
+**Trade-off**:
+- **Pro**: Much better performance at scale (O(1) vs. O(n) for each TODO)
+- **Pro**: Simpler logic, easier to debug and explain to users
+- **Con**: Users must manage dependency chains manually (if A is blocked, they must check what blocks B, what blocks C, etc.)
+- **Con**: A task might show as "unblocked" even though a transitive dependency is blocking upstream
+
+**Future Enhancement**: Could add a "deep dependency check" feature that optionally computes transitive blocking status, but this would be a separate, more expensive query operation (e.g., `GET /todo/:id/deep-status`).
+
 ---
 
 ### 4. **10,000+ Items Performance Requirement**
@@ -117,6 +165,60 @@ This project implements a full-stack TODO list application with **NestJS** backe
 - Lost updates if two users modify the same TODO simultaneously
 
 **Note**: Did not implement multi-user authentication, so "concurrent access" means multiple clients accessing a shared TODO list rather than per-user isolation.
+
+---
+
+### 6. **Status Transition Rules**
+
+**Requirement**: The specification listed four statuses (NOT_STARTED, IN_PROGRESS, COMPLETED, ARCHIVED) but didn't explicitly define whether status transitions must follow a strict workflow.
+
+**Interpretation**: Implemented **flexible status transitions** with only one enforcement rule:
+
+**✅ Allowed**:
+- Create TODO in any status (NOT_STARTED, IN_PROGRESS, COMPLETED, or ARCHIVED)
+- Update TODO to any status directly (e.g., NOT_STARTED → COMPLETED, skipping IN_PROGRESS)
+- Move backwards in workflow (e.g., COMPLETED → NOT_STARTED if task needs rework)
+
+**🚫 Only Restriction**:
+- Cannot move to IN_PROGRESS if dependencies are not satisfied (must be COMPLETED or ARCHIVED)
+
+**Rationale**:
+1. **Flexibility**: Users might create tasks that are already in progress or completed (e.g., retroactive tracking)
+2. **Real-world workflows**: Not all tasks follow a linear path. A task might be directly marked COMPLETED if it's trivial, or moved back to NOT_STARTED if requirements change
+3. **Archived flexibility**: Users can archive tasks directly from any state (cancelled tasks, duplicate tasks, etc.)
+4. **Simplicity**: Enforcing strict state machines adds complexity with limited benefit for a TODO app
+
+**Example Use Cases**:
+```typescript
+// Creating a task that's already in progress
+POST /todo
+{
+  "name": "Deploy hotfix",
+  "status": "IN_PROGRESS"  // ✅ Allowed
+}
+
+// Jumping directly to completed for trivial tasks
+PATCH /todo/123
+{
+  "status": "COMPLETED"  // ✅ Allowed, even if current status is NOT_STARTED
+}
+
+// Moving completed task back for rework
+PATCH /todo/456
+{
+  "status": "NOT_STARTED"  // ✅ Allowed
+}
+
+// Archiving a cancelled task without completing it
+PATCH /todo/789
+{
+  "status": "ARCHIVED"  // ✅ Allowed
+}
+```
+
+**Trade-off**: More flexible but potentially allows invalid state transitions (e.g., accidentally marking NOT_STARTED when meaning IN_PROGRESS). However, the `todo_history` collection tracks all changes, so any mistakes can be audited and corrected.
+
+**Alternative considered**: Strict state machine (NOT_STARTED → IN_PROGRESS → COMPLETED → ARCHIVED), but this would be overly restrictive and frustrating for users. If strict workflows are needed in the future, they could be enforced at the organization/team level via business rules.
 
 ---
 
