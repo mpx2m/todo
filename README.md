@@ -45,8 +45,7 @@ pnpm install
 The backend needs a MongoDB connection string. Create a `.env` file inside `todo-be/` (or provide environment variables in your preferred way):
 
 ```
-MONGODB_URI=mongodb://localhost:27017/todo-dev
-PORT=3001
+MONGO_URI=<your connection string>
 ```
 
 ## Run (development)
