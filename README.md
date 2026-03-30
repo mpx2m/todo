@@ -220,20 +220,14 @@ VPS_PORT         - SSH port (usually 22)
 5. **Test** - Vitest unit/integration tests
 6. **Build** - Next.js production build
 7. **Version Bump** - Auto-increment patch version on main branch
-8. **Deploy to Vercel** - Automatic production deployment
 
-**Deployment Details:**
-- Uses `amondnet/vercel-action` for seamless Vercel deployment
-- Only deploys on successful build and tests
-- Deploys to production on main branch pushes
-- Preview deployments on pull requests (handled by Vercel)
-
-**Required Secrets:**
-```
-VERCEL_TOKEN          - Vercel authentication token
-VERCEL_ORG_ID         - Your Vercel organization/team ID
-VERCEL_PROJECT_ID     - Your Vercel project ID
-```
+**Deployment:**
+- Frontend is deployed to **Vercel** automatically via **Vercel Git Integration**
+- Vercel monitors the GitHub repository and triggers deployment when:
+  - Code is pushed to main branch (production deployment)
+  - Pull requests are created (preview deployments)
+- Deployment happens **after** version bump is committed by GitHub Actions
+- No manual deployment configuration needed in GitHub Actions workflow
 
 ### CI/CD Features
 
@@ -267,23 +261,23 @@ VERCEL_PROJECT_ID     - Your Vercel project ID
    - Import your GitHub repository
    - Set root directory to `todo-fe`
    - Configure build settings (auto-detected for Next.js)
-3. **Get Vercel credentials**:
-   - **Token**: Account Settings → Tokens → Create Token
-   - **Org ID**: Project Settings → General → copy from "Project ID" section
-   - **Project ID**: Project Settings → General → copy "Project ID"
-4. **Add Vercel secrets** to GitHub Settings → Secrets and variables → Actions:
-   - `VERCEL_TOKEN` - Your Vercel authentication token
-   - `VERCEL_ORG_ID` - Your Vercel organization/team ID
-   - `VERCEL_PROJECT_ID` - Your Vercel project ID
-5. **Configure environment variables** in Vercel Dashboard:
+3. **Configure environment variables** in Vercel Dashboard:
    - `NEXT_PUBLIC_API_URL` - Your backend API URL (e.g., https://api.yourdomain.com)
-6. **Push to main** to trigger automatic deployment
+4. **Enable Git Integration** (enabled by default):
+   - Vercel will automatically monitor the repository
+   - Deployments triggered on push to main branch
+   - Preview deployments created for pull requests
+5. **Push to main** - GitHub Actions runs CI and bumps version, then Vercel auto-deploys
 
 #### Testing the Workflows
 
 - **Pull requests** will run tests and checks without deploying
-- **Push to main** will run full pipeline including deployment
-- **Manual trigger** via GitHub Actions tab for on-demand deployments
+  - Backend: No VPS deployment
+  - Frontend: Vercel creates preview deployment automatically
+- **Push to main** will run full pipeline:
+  - Backend: Tests → Build → Version bump → Deploy to VPS
+  - Frontend: Tests → Build → Version bump (then Vercel auto-deploys)
+- **Manual trigger** via GitHub Actions tab for on-demand testing/deployment
 
 
 
