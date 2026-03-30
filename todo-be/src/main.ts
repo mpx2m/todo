@@ -1,5 +1,4 @@
 import fs from 'fs';
-import path from 'path';
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
@@ -8,8 +7,8 @@ import { TransformInterceptor } from './transform.interceptor';
 import pkg from '../package.json';
 
 async function bootstrap() {
-  const keyPath = path.join(__dirname, '/../osaka.rainydev.top.key');
-  const certPath = path.join(__dirname, '/../osaka.rainydev.top.crt');
+  const keyPath = '/root/osaka.rainydev.top.key';
+  const certPath = '/root/osaka.rainydev.top.crt';
 
   let httpsOptions: NestApplicationOptions['httpsOptions'] | undefined;
 
