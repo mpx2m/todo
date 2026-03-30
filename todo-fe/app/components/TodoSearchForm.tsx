@@ -52,7 +52,7 @@ export function TodoSearchForm({ onSearch, onAdd }: TodoSearchFormProps) {
         <Select
           allowClear
           style={{ width: 150 }}
-          placeholder="Status"
+          placeholder="Dependency"
           options={[
             { value: "BLOCKED", label: "Blocked" },
             { value: "UNBLOCKED", label: "Unblocked" },
