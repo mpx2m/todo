@@ -74,3 +74,27 @@ jobs:
 
           git pull --rebase
           git push
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v0.1.9
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_PRIVATE_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            cd ~/todo
+            git pull origin main
+            cd todo-be
+
+            pnpm i
+            pnpm build
+
+            pm2 describe todo-backend > /dev/null 2>&1
+              if [ $? -eq 0 ]; then
+                pm2 restart todo-backend
+              else
+                pm2 start dist/main.js --name todo-backend
+                pm2 save
+                pm2 startup -u $USER --hp $HOME
+              fi
