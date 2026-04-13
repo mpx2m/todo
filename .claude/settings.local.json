@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -m venv .venv)",
+      "Bash(.venv/bin/pip install:*)",
+      "Bash(.venv/bin/python -c \"import fastapi, sqlmodel, asyncpg; print\\(''All imports OK''\\)\")",
+      "Bash(.venv/bin/python -c \"from app.main import app; print\\(''App import OK''\\)\")",
+      "Bash(.venv/bin/uvicorn app.main:app --reload --port 8001)",
+      "Bash(brew services:*)",
+      "Bash(pg_isready)",
+      "Bash(pkill -f \"uvicorn app.main:app\")",
+      "Bash(curl -s http://localhost:8001/health)",
+      "Bash(curl -s \"http://localhost:8001/todo/search?page=1&limit=10\")",
+      "Bash(python3 -m json.tool)",
+      "Bash(curl -s -X POST http://localhost:8001/todo/ -H \"Content-Type: application/json\" -d '{\"\"\"\"name\"\"\"\":\"\"\"\"Test Todo\"\"\"\",\"\"\"\"description\"\"\"\":\"\"\"\"Hello from FastAPI\"\"\"\",\"\"\"\"priority\"\"\"\":\"\"\"\"HIGH\"\"\"\",\"\"\"\"dueDate\"\"\"\":\"\"\"\"2026-05-01T10:00:00Z\"\"\"\"}')",
+      "Bash(ID=\"cf2abd42-e5e7-4f35-ab21-f96e323963de\")",
+      "Bash(curl -s \"http://localhost:8001/todo/$ID\")",
+      "Bash(curl -s -X POST http://localhost:8001/todo/ -H \"Content-Type: application/json\" -d '{\"\"\"\"name\"\"\"\":\"\"\"\"Buy groceries\"\"\"\",\"\"\"\"description\"\"\"\":\"\"\"\"Milk and eggs\"\"\"\",\"\"\"\"priority\"\"\"\":\"\"\"\"MEDIUM\"\"\"\",\"\"\"\"dueDate\"\"\"\":\"\"\"\"2026-05-10T09:00:00Z\"\"\"\"}')",
+      "Bash(ID=\"658e65d1-4957-4494-928d-aa1706a8d630\")",
+      "Bash(curl -s -X PATCH \"http://localhost:8001/todo/$ID\" -H \"Content-Type: application/json\" -d '{\"\"\"\"status\"\"\"\":\"\"\"\"IN_PROGRESS\"\"\"\"}')"
+    ]
+  }
+}
